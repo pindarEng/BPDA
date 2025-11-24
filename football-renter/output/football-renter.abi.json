@@ -1,0 +1,114 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.90.0",
+            "commitHash": "1159e78c4747b02ef996e55082b704c09b970588",
+            "commitDate": "2025-09-14",
+            "channel": "Stable",
+            "short": "rustc 1.90.0 (1159e78c4 2025-09-14)"
+        },
+        "contractCrate": {
+            "name": "football-renter",
+            "version": "0.0.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.62.1"
+        }
+    },
+    "docs": [
+        "An empty contract. To be used as a template when starting a new contract from scratch."
+    ],
+    "name": "FootballRenter",
+    "constructor": {
+        "inputs": [],
+        "outputs": []
+    },
+    "upgradeConstructor": {
+        "inputs": [],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "name": "setMinDeposit",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "create_football_slot",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "start_time",
+                    "type": "u64"
+                },
+                {
+                    "name": "end_time",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getReservedSlot",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "slot_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Slot"
+                }
+            ]
+        }
+    ],
+    "esdtAttributes": [],
+    "hasCallback": false,
+    "types": {
+        "Slot": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "start",
+                    "type": "u64"
+                },
+                {
+                    "name": "end",
+                    "type": "u64"
+                },
+                {
+                    "name": "payer_address",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "confirmed",
+                    "type": "bool"
+                },
+                {
+                    "name": "initiator_address",
+                    "type": "Address"
+                }
+            ]
+        }
+    }
+}

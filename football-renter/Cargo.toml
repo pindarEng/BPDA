@@ -1,0 +1,28 @@
+[package]
+name = "football-renter"
+version = "0.0.0"
+edition = "2021"
+publish = false
+authors = ["you"]
+
+[lib]
+path = "src/football_renter.rs"
+
+[dependencies.multiversx-sc]
+version = "0.62.0"
+
+[dev-dependencies]
+num-bigint = "0.4"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.62.0"
+
+[workspace]
+members = [
+    ".",
+    "meta",
+    "interactor", # de ce nu este adaugat automat??
+]
+
+#[features]  
+#chain-simulator-tests = []
