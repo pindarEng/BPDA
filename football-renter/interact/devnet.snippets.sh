@@ -1,10 +1,12 @@
 GABI="/home/pindar/wallet.pem"
 # GABI="/home/pindar/sim-wallet.pem"
+# GABI="/home/pindar/model_exam_wallet.pem"
 ADDRESS=$(mxpy data load --key=address-devnet)
 DEPLOY_TRANSACTION=$(mxpy data load --key=deployTransaction-devnet)
 PROXY=https://devnet-api.multiversx.com
 # PROXY=http://localhost:8085
 PROJECT="../output/football-renter.wasm"
+
 
 deploy() {
     mxpy --verbose contract deploy --bytecode=${PROJECT} --pem=${GABI} --gas-limit 100000000 --send --outfile="deploy-devnet.interaction.json" --proxy=${PROXY} || return

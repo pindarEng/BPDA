@@ -7,6 +7,7 @@ use multiversx_sc::derive_imports::*;
 pub type SlotId = u64;
 
 mod events;
+mod storage;
 
 #[type_abi]
 #[derive(TopEncode, TopDecode,NestedEncode,NestedDecode, Debug)]
@@ -24,12 +25,14 @@ pub struct Slot<M: ManagedTypeApi>{
 pub trait FootballRenter: events::FootbalEvents{
     // have to do smth here i guess
     #[init]
-    fn init(&self) {}
+    fn init(&self) {
+        self.next_slot_id().set(1);
+    }
 
     #[upgrade]
     fn upgrade(&self) {}
 
-
+// 7.2 storages
     #[storage_mapper("footballFieldManagerAddress")]
     fn field_manager_address(&self) -> SingleValueMapper<ManagedAddress<Self::Api>>;
 
@@ -54,7 +57,7 @@ pub trait FootballRenter: events::FootbalEvents{
         
         self.minimum_deposit().set(amount);  
     }
-
+// 7.3 
     #[payable("EGLD")]
     #[endpoint]
     fn create_football_slot(&self, start_time: u64, end_time: u64) -> SlotId {
@@ -90,11 +93,12 @@ pub trait FootballRenter: events::FootbalEvents{
 
         self.participants(current_slot_id).insert(caller.clone());
 
-
+        self.emit_create_football_slot_event(current_slot_id, &caller, start_time, end_time, &deposit_amount);
+        
         current_slot_id
     }
 
-// 7.4
+// 7.4 participare
     #[payable("EGLD")]
     #[endpoint]
     fn participate_football_slot(&self, slot_id: SlotId) {
@@ -136,7 +140,7 @@ pub trait FootballRenter: events::FootbalEvents{
         
     }
 
-// 7.5
+// 7.5 cancel slot
     #[endpoint]
     fn cancel_football_slot(&self, slot_id: SlotId) {
         let caller = self.blockchain().get_caller();
@@ -168,7 +172,7 @@ pub trait FootballRenter: events::FootbalEvents{
     }
 
 
-// 7.6
+// 7.6 setare football manager
     #[endpoint(setFootballFieldManager)]
     fn set_football_field_manager(&self, new_manager: ManagedAddress){
         let caller = self.blockchain().get_caller();
@@ -191,5 +195,5 @@ pub trait FootballRenter: events::FootbalEvents{
 
 
 // 7.7 payCourt - min deposit de la toti participanti? whatabout full cost?
-    
+// payment endpoint     
 }

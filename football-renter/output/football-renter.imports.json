@@ -25,6 +25,7 @@
   "managedGetAllTransfersCallValue",
   "managedSignalError",
   "managedTransferValueExecute",
+  "managedWriteLog",
   "signalError",
   "smallIntFinishUnsigned",
   "smallIntGetUnsignedArgument"
