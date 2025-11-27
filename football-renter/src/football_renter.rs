@@ -6,8 +6,10 @@ use multiversx_sc::derive_imports::*;
 
 pub type SlotId = u64;
 
+mod events;
+
 #[type_abi]
-#[derive(TopEncode, TopDecode,NestedEncode,NestedDecode)]
+#[derive(TopEncode, TopDecode,NestedEncode,NestedDecode, Debug)]
 pub struct Slot<M: ManagedTypeApi>{
     pub start: u64,
     pub end: u64,
@@ -19,7 +21,7 @@ pub struct Slot<M: ManagedTypeApi>{
 
 /// An empty contract. To be used as a template when starting a new contract from scratch.
 #[multiversx_sc::contract]
-pub trait FootballRenter {
+pub trait FootballRenter: events::FootbalEvents{
     // have to do smth here i guess
     #[init]
     fn init(&self) {}
@@ -49,7 +51,8 @@ pub trait FootballRenter {
     // TODO: add this to the init not here ...
     #[endpoint(setMinDeposit)]
     fn set_minimum_deposit(&self, amount: BigUint){
-            self.minimum_deposit().set(amount);  
+        
+        self.minimum_deposit().set(amount);  
     }
 
     #[payable("EGLD")]
@@ -87,9 +90,11 @@ pub trait FootballRenter {
 
         self.participants(current_slot_id).insert(caller.clone());
 
+
         current_slot_id
     }
 
+// 7.4
     #[payable("EGLD")]
     #[endpoint]
     fn participate_football_slot(&self, slot_id: SlotId) {
@@ -109,28 +114,82 @@ pub trait FootballRenter {
             "the slot doesnt exist"
         );
 
+
+        let mut slot: Slot<<Self as ContractBase>::Api> = self.reserved_slots(slot_id).get();
+
+        require!(
+            !slot.confirmed,
+            "slot is confirmed cant join anymore"
+        );
+
         let mut participants_mapper = self.participants(slot_id);
+
         require!(
             !participants_mapper.contains(&caller),
             "you are already a participant in this slot"
         );
 
         participants_mapper.insert(caller.clone());
+        slot.amount += deposit_amount.clone_value();
         
+        self.reserved_slots(slot_id).set(&slot);
+        
+    }
+
+// 7.5
+    #[endpoint]
+    fn cancel_football_slot(&self, slot_id: SlotId) {
+        let caller = self.blockchain().get_caller();
+
+        require!(
+            !self.reserved_slots(slot_id).is_empty(),
+            "the slot doesnt exit"
+        );
+
+        let slot = self.reserved_slots(slot_id).get();
+
+        require!(
+            caller == slot.initiator_address,
+            "only the slot creator can cancel slots"
+        );
+
+        require!(
+            !slot.confirmed,
+            "slot has been confirmed already cannot cancel"
+        );
+
+
+        let min_deposit = self.minimum_deposit().get();
+        let refund_amount = slot.amount.clone();
+        self.send().direct_egld(&slot.initiator_address, &refund_amount);
+
+
+
+    }
+
+
+// 7.6
+    #[endpoint(setFootballFieldManager)]
+    fn set_football_field_manager(&self, new_manager: ManagedAddress){
+        let caller = self.blockchain().get_caller();
+        let previous_manager = self.field_manager_address().get();
+
+        require!(
+            caller == previous_manager,
+            "the caller must be the previous manager only he can change the manager; old manager(caller) -> new manager "
+        );
+
+        self.field_manager_address().set(new_manager.clone());
+
+        //event emit manager assigned event
     }
 
     #[view(getReservedSlot)]  
     fn get_reserved_slot(&self, slot_id: SlotId) -> Slot<Self::Api> {  
-    self.reserved_slots(slot_id).get()  
+        self.reserved_slots(slot_id).get()  
     }
 
-    // #[event("create_football_slot")]
-    // fn emit_create_football_slot_event(
-    //     &self,
-    //     #[indexed] slot_id: SlotId,
-    //     #[indexed] initator: &ManagedAddress<Self::Api>,
-    //     start: u64,
-    //     end: u64,
-    //     deposit: &BigUint<Self::Api>,
-    // );
+
+// 7.7 payCourt - min deposit de la toti participanti? whatabout full cost?
+    
 }

@@ -12,6 +12,7 @@
   "mBufferFinish",
   "mBufferFromBigIntUnsigned",
   "mBufferFromSmallIntUnsigned",
+  "mBufferGetArgument",
   "mBufferGetByteSlice",
   "mBufferGetLength",
   "mBufferNew",
@@ -23,6 +24,7 @@
   "managedCaller",
   "managedGetAllTransfersCallValue",
   "managedSignalError",
+  "managedTransferValueExecute",
   "signalError",
   "smallIntFinishUnsigned",
   "smallIntGetUnsignedArgument"

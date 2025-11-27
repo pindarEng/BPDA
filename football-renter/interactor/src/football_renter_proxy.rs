@@ -81,6 +81,19 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn set_minimum_deposit<
+        Arg0: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        amount: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setMinDeposit")
+            .argument(&amount)
+            .original_result()
+    }
+
     pub fn create_football_slot<
         Arg0: ProxyArg<u64>,
         Arg1: ProxyArg<u64>,
@@ -95,4 +108,69 @@ where
             .argument(&end_time)
             .original_result()
     }
+
+    pub fn participate_football_slot<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        slot_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("participate_football_slot")
+            .argument(&slot_id)
+            .original_result()
+    }
+
+    pub fn cancel_football_slot<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        slot_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("cancel_football_slot")
+            .argument(&slot_id)
+            .original_result()
+    }
+
+    pub fn set_football_field_manager<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        new_manager: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setFootballFieldManager")
+            .argument(&new_manager)
+            .original_result()
+    }
+
+    pub fn get_reserved_slot<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        slot_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, Slot<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getReservedSlot")
+            .argument(&slot_id)
+            .original_result()
+    }
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Debug)]
+pub struct Slot<Api>
+where
+    Api: ManagedTypeApi,
+{
+    pub start: u64,
+    pub end: u64,
+    pub payer_address: ManagedAddress<Api>,
+    pub amount: BigUint<Api>,
+    pub confirmed: bool,
+    pub initiator_address: ManagedAddress<Api>,
 }

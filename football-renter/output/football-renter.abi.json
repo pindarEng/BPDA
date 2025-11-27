@@ -63,6 +63,42 @@
             ]
         },
         {
+            "name": "participate_football_slot",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "slot_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "cancel_football_slot",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "slot_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setFootballFieldManager",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "new_manager",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
             "name": "getReservedSlot",
             "mutability": "readonly",
             "inputs": [
@@ -74,6 +110,125 @@
             "outputs": [
                 {
                     "type": "Slot"
+                }
+            ]
+        }
+    ],
+    "events": [
+        {
+            "identifier": "create_football_slot",
+            "inputs": [
+                {
+                    "name": "slot_id",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "initiator",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "start",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "end",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "deposit",
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "identifier": "add_participant",
+            "inputs": [
+                {
+                    "name": "slot_id",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "new_participant",
+                    "type": "Address",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "slot_cancelled",
+            "inputs": [
+                {
+                    "name": "slot_id",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "cancelled_by",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "refund_amount",
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "identifier": "manager_assigned",
+            "inputs": [
+                {
+                    "name": "old_manager",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "new_manager",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "assigned_by",
+                    "type": "Address",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "court_paid",
+            "inputs": [
+                {
+                    "name": "slot_id",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "recipient",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "payment_amount",
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "identifier": "slot_confirmed",
+            "inputs": [
+                {
+                    "name": "slot_id",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "confirmed_by",
+                    "type": "Address",
+                    "indexed": true
                 }
             ]
         }
