@@ -23,10 +23,16 @@ pub struct Slot<M: ManagedTypeApi>{
 /// An empty contract. To be used as a template when starting a new contract from scratch.
 #[multiversx_sc::contract]
 pub trait FootballRenter: events::FootbalEvents{
-    // have to do smth here i guess
+    // have to do smth here i guess - i did smth here i guess
     #[init]
-    fn init(&self) {
+    fn init(&self, min_deposit_init: BigUint) {
         self.next_slot_id().set(1);
+
+        self.field_manager_address().set(self.blockchain().get_caller());
+
+        self.minimum_deposit().set(min_deposit_init);
+
+        self.court_cost().set(BigUint::zero());
     }
 
     #[upgrade]
@@ -54,7 +60,11 @@ pub trait FootballRenter: events::FootbalEvents{
     // TODO: add this to the init not here ...
     #[endpoint(setMinDeposit)]
     fn set_minimum_deposit(&self, amount: BigUint){
-        
+        let caller = self.blockchain().get_caller();
+        require!(
+            caller == self.field_manager_address().get(),
+            "only the field manager can change the minimum deposit"
+        );
         self.minimum_deposit().set(amount);  
     }
 // 7.3 
@@ -278,7 +288,7 @@ pub trait FootballRenter: events::FootbalEvents{
             "the slot doesnt exit"
         );
         require!(
-            slot.confirmed,
+            !slot.confirmed,
             "the slot is already confirmed"
         );
 
