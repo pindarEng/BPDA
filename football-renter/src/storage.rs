@@ -1,4 +1,6 @@
 
+// use multiversx_sc::imports::*;  
+// pub type SlotId = u64;
 
 // #[multiversx_sc::module]
 // pub trait FootbalStorage{

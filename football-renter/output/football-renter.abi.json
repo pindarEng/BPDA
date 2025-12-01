@@ -21,7 +21,12 @@
     ],
     "name": "FootballRenter",
     "constructor": {
-        "inputs": [],
+        "inputs": [
+            {
+                "name": "min_deposit_init",
+                "type": "BigUint"
+            }
+        ],
         "outputs": []
     },
     "upgradeConstructor": {
@@ -99,8 +104,41 @@
             "outputs": []
         },
         {
-            "name": "getReservedSlot",
-            "mutability": "readonly",
+            "name": "payCourt",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "slot_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setFootballCourtCost",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "cost",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "confirmSlot",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "slot_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getSlotStatus",
+            "mutability": "mutable",
             "inputs": [
                 {
                     "name": "slot_id",
@@ -110,6 +148,45 @@
             "outputs": [
                 {
                     "type": "Slot"
+                },
+                {
+                    "type": "List<Address>"
+                },
+                {
+                    "type": "BigUint"
+                },
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "getReservedSlotDetails",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "slot_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                },
+                {
+                    "type": "u64"
+                },
+                {
+                    "type": "Address"
+                },
+                {
+                    "type": "BigUint"
+                },
+                {
+                    "type": "bool"
+                },
+                {
+                    "type": "Address"
                 }
             ]
         }

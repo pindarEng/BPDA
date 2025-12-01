@@ -1,8 +1,11 @@
 [
   "bigIntAdd",
   "bigIntCmp",
+  "bigIntFinishUnsigned",
   "bigIntGetUnsignedArgument",
   "bigIntSetInt64",
+  "bigIntSign",
+  "bigIntSub",
   "checkNoPayment",
   "getNumArguments",
   "mBufferAppend",
@@ -27,6 +30,7 @@
   "managedTransferValueExecute",
   "managedWriteLog",
   "signalError",
+  "smallIntFinishSigned",
   "smallIntFinishUnsigned",
   "smallIntGetUnsignedArgument"
 ]

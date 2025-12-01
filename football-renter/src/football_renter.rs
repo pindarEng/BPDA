@@ -2,7 +2,7 @@
 
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
-use multiversx_sc::{derive_imports::*, typenum::True};
+use multiversx_sc::{derive_imports::*};
 
 pub type SlotId = u64;
 
@@ -77,7 +77,7 @@ pub trait FootballRenter: events::FootbalEvents{
         let minimum_deposit = self.minimum_deposit().get();
 
         require!(
-            *deposit_amount >= minimum_deposit,
+            *deposit_amount == minimum_deposit,
             "the deposit must be at least equal or bigger than the deposit requiremt."
         );
 
@@ -119,7 +119,7 @@ pub trait FootballRenter: events::FootbalEvents{
         let minimum_deposit = self.minimum_deposit().get();
 
         require!(
-            *deposit_amount >= minimum_deposit,
+            *deposit_amount == minimum_deposit,
             "the deposit must be at least equal or bigger than the deposit requiremt."
         );
 
@@ -314,10 +314,12 @@ pub trait FootballRenter: events::FootbalEvents{
         (slot,participants,amount,confirmed).into()
     }
 
-
-   #[view(getReservedSlot)]  
-    fn get_reserved_slot(&self, slot_id: SlotId) -> Slot<Self::Api> {  
-        self.reserved_slots(slot_id).get()  
+    #[view(getReservedSlotDetails)]  
+    fn get_reserved_slot_details(&self, slot_id: SlotId) -> MultiValue6<u64, u64, ManagedAddress<Self::Api>, BigUint<Self::Api>, bool, ManagedAddress<Self::Api>> 
+    {  
+        let slot = self.reserved_slots(slot_id).get();  
+    
+        (slot.start, slot.end, slot.payer_address, slot.amount, slot.confirmed, slot.initiator_address).into()  
     }
 
 }
