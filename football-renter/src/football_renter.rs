@@ -2,7 +2,7 @@
 
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
-use multiversx_sc::derive_imports::*;
+use multiversx_sc::{derive_imports::*, typenum::True};
 
 pub type SlotId = u64;
 
@@ -164,10 +164,28 @@ pub trait FootballRenter: events::FootbalEvents{
 
 
         let min_deposit = self.minimum_deposit().get();
-        let refund_amount = slot.amount.clone();
-        self.send().direct_egld(&slot.initiator_address, &refund_amount);
+        let mut total_refunded = BigUint::zero();
+        let mut participants_mapper = self.participants(slot_id);
 
+        let participants_addreses = participants_mapper.iter().collect::<ManagedVec<Self::Api, ManagedAddress<Self::Api>>>();
+        
+        for participants_address in participants_addreses.into_iter(){
+            require!(slot.amount >= &total_refunded + &min_deposit, "Not enough funds for full refund");
 
+            self.send().direct_egld(&participants_address, &min_deposit);
+            total_refunded += min_deposit.clone();  // or use clone  
+        }
+        
+        let remaining_balance = &slot.amount - &total_refunded;
+        if remaining_balance > BigUint::zero(){
+            self.send().direct_egld(&slot.initiator_address, &remaining_balance);
+            total_refunded += &remaining_balance;   
+        }
+
+        self.reserved_slots(slot_id).clear();
+        participants_mapper.clear();
+
+        self.emit_slot_cancelled_event(slot_id, &caller, &total_refunded);
 
     }
 
@@ -185,15 +203,114 @@ pub trait FootballRenter: events::FootbalEvents{
 
         self.field_manager_address().set(new_manager.clone());
 
+        self.emit_manager_assigned_event(&previous_manager, &new_manager, &caller);
         //event emit manager assigned event
-    }
-
-    #[view(getReservedSlot)]  
-    fn get_reserved_slot(&self, slot_id: SlotId) -> Slot<Self::Api> {  
-        self.reserved_slots(slot_id).get()  
     }
 
 
 // 7.7 payCourt - min deposit de la toti participanti? whatabout full cost?
-// payment endpoint     
+// payment endpoint  - transferam bani de la participanti catre field manager
+    #[endpoint(payCourt)]
+    fn pay_court(&self, slot_id: SlotId){
+        let caller = self.blockchain().get_caller();
+        let manager_address = self.field_manager_address().get();
+        let mut slot= self.reserved_slots(slot_id).get();
+
+        require!(
+            caller == manager_address,
+            "only the field manager can transfer trigger the payment"
+        );
+
+        require!(
+            !self.reserved_slots(slot_id).is_empty(),
+            "the slot doesnt exit"
+        );
+
+        require!(
+            slot.confirmed,
+            "the slot has to be confirmed first"
+        );
+
+        let payment_amount = slot.amount.clone();
+        require!(
+            payment_amount > BigUint::zero(),
+            "no funds found for the selected slot"
+        );
+        
+        let court_cost = self.court_cost().get();
+        require!(
+            court_cost > BigUint::zero(),
+            "the court cost must be set"
+        );
+
+        self.send().direct_egld(&manager_address, &payment_amount);
+        slot.amount = BigUint::zero();
+        self.reserved_slots(slot_id).set(&slot);
+
+        self.emit_court_paid_event(slot_id, &manager_address, &payment_amount);
+
+    }
+
+
+// 7.8 footballcourtcost
+    #[endpoint(setFootballCourtCost)]
+    fn set_football_court_cost(&self, cost: BigUint){
+        let caller = self.blockchain().get_caller();
+        require!(
+            caller == self.field_manager_address().get(),
+            "the caller isnt a manager he got no power for this action"
+        );
+        self.court_cost().set(cost);
+    
+    }
+
+// 7.9 confirmslot
+    #[endpoint(confirmSlot)]
+    fn confirm_slot(&self, slot_id: SlotId){
+        let caller = self.blockchain().get_caller();
+        let mut slot = self.reserved_slots(slot_id).get();
+        require!(
+            caller == self.field_manager_address().get(),
+            "the caller isnt a manager he got no power for this action"
+        );
+        require!(
+            !self.reserved_slots(slot_id).is_empty(),
+            "the slot doesnt exit"
+        );
+        require!(
+            slot.confirmed,
+            "the slot is already confirmed"
+        );
+
+        slot.confirmed = true;
+        self.reserved_slots(slot_id).set(&slot);
+
+        self.emit_slot_confirmed_event(slot_id, &caller);
+    }
+// 7.10
+    #[endpoint(getSlotStatus)]
+    fn get_slot_status(&self, slot_id: SlotId) -> MultiValue4<Slot<Self::Api>, ManagedVec<Self::Api, ManagedAddress<Self::Api>>, BigUint<Self::Api>, bool>
+    {
+        let slot = self.reserved_slots(slot_id).get();
+        let participants = self.participants(slot_id).iter().collect();
+        let amount = slot.amount.clone();
+        let confirmed = slot.confirmed;
+
+        require!(
+            !self.reserved_slots(slot_id).is_empty(),
+            "the slot doesnt exit"
+        );
+
+        (slot,participants,amount,confirmed).into()
+    }
+
+
+   #[view(getReservedSlot)]  
+    fn get_reserved_slot(&self, slot_id: SlotId) -> Slot<Self::Api> {  
+        self.reserved_slots(slot_id).get()  
+    }
+
 }
+
+
+// if we for example have 2 participants and the cost isnt met, we just refund to those 2 right?
