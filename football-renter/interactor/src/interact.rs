@@ -1,7 +1,8 @@
 #![allow(non_snake_case)]
 
 pub mod config;
-mod football_renter_proxy;
+pub mod football_renter_proxy;
+use football_renter_proxy as proxy;
 
 use config::Config;
 use multiversx_sc_snippets::imports::*;
@@ -29,7 +30,11 @@ pub async fn football_renter_cli() {
         "participate_football_slot" => interact.participate_football_slot().await,
         "cancel_football_slot" => interact.cancel_football_slot().await,
         "setFootballFieldManager" => interact.set_football_field_manager().await,
-        "getReservedSlot" => interact.get_reserved_slot().await,
+        "payCourt" => interact.pay_court().await,
+        "setFootballCourtCost" => interact.set_football_court_cost().await,
+        "confirmSlot" => interact.confirm_slot().await,
+        "getSlotStatus" => interact.get_slot_status().await,
+        "getReservedSlotDetails" => interact.get_reserved_slot_details().await,
         _ => panic!("unknown command: {}", &cmd),
     }
 }
@@ -82,6 +87,20 @@ pub struct ContractInteract {
 }
 
 impl ContractInteract {
+
+    pub fn interactor_mut(&mut self) -> &mut Interactor {
+        &mut self.interactor
+    }
+
+    pub fn wallet(&self) -> &Address {
+        &self.wallet_address
+    }
+
+    pub fn contract_address(&self) -> &Bech32Address {
+        self.state.current_address()
+    }
+
+
     pub async fn new(config: Config) -> Self {
         let mut interactor = Interactor::new(config.gateway_uri())
             .await
@@ -108,13 +127,15 @@ impl ContractInteract {
     }
 
     pub async fn deploy(&mut self) {
+        let min_deposit_init = BigUint::<StaticApi>::from(0u128);
+
         let new_address = self
             .interactor
             .tx()
             .from(&self.wallet_address)
             .gas(30_000_000u64)
-            .typed(football_renter_proxy::FootballRenterProxy)
-            .init()
+            .typed(proxy::FootballRenterProxy)
+            .init(min_deposit_init)
             .code(&self.contract_code)
             .returns(ReturnsNewAddress)
             .run()
@@ -131,7 +152,7 @@ impl ContractInteract {
             .to(self.state.current_address())
             .from(&self.wallet_address)
             .gas(30_000_000u64)
-            .typed(football_renter_proxy::FootballRenterProxy)
+            .typed(proxy::FootballRenterProxy)
             .upgrade()
             .code(&self.contract_code)
             .code_metadata(CodeMetadata::UPGRADEABLE)
@@ -151,7 +172,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(football_renter_proxy::FootballRenterProxy)
+            .typed(proxy::FootballRenterProxy)
             .set_minimum_deposit(amount)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -172,7 +193,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(football_renter_proxy::FootballRenterProxy)
+            .typed(proxy::FootballRenterProxy)
             .create_football_slot(start_time, end_time)
             .egld(egld_amount)
             .returns(ReturnsResultUnmanaged)
@@ -193,7 +214,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(football_renter_proxy::FootballRenterProxy)
+            .typed(proxy::FootballRenterProxy)
             .participate_football_slot(slot_id)
             .egld(egld_amount)
             .returns(ReturnsResultUnmanaged)
@@ -212,7 +233,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(football_renter_proxy::FootballRenterProxy)
+            .typed(proxy::FootballRenterProxy)
             .cancel_football_slot(slot_id)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -230,7 +251,7 @@ impl ContractInteract {
             .from(&self.wallet_address)
             .to(self.state.current_address())
             .gas(30_000_000u64)
-            .typed(football_renter_proxy::FootballRenterProxy)
+            .typed(proxy::FootballRenterProxy)
             .set_football_field_manager(new_manager)
             .returns(ReturnsResultUnmanaged)
             .run()
@@ -239,15 +260,87 @@ impl ContractInteract {
         println!("Result: {response:?}");
     }
 
-    pub async fn get_reserved_slot(&mut self) {
+    pub async fn pay_court(&mut self) {
+        let slot_id = 0u64;
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::FootballRenterProxy)
+            .pay_court(slot_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    pub async fn set_football_court_cost(&mut self) {
+        let cost = BigUint::<StaticApi>::from(0u128);
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::FootballRenterProxy)
+            .set_football_court_cost(cost)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    pub async fn confirm_slot(&mut self) {
+        let slot_id = 0u64;
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::FootballRenterProxy)
+            .confirm_slot(slot_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    pub async fn get_slot_status(&mut self) {
+        let slot_id = 0u64;
+
+        let response = self
+            .interactor
+            .tx()
+            .from(&self.wallet_address)
+            .to(self.state.current_address())
+            .gas(30_000_000u64)
+            .typed(proxy::FootballRenterProxy)
+            .get_slot_status(slot_id)
+            .returns(ReturnsResultUnmanaged)
+            .run()
+            .await;
+
+        println!("Result: {response:?}");
+    }
+
+    pub async fn get_reserved_slot_details(&mut self) {
         let slot_id = 0u64;
 
         let result_value = self
             .interactor
             .query()
             .to(self.state.current_address())
-            .typed(football_renter_proxy::FootballRenterProxy)
-            .get_reserved_slot(slot_id)
+            .typed(proxy::FootballRenterProxy)
+            .get_reserved_slot_details(slot_id)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
@@ -256,3 +349,5 @@ impl ContractInteract {
     }
 
 }
+
+

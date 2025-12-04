@@ -83,8 +83,11 @@ pub trait FootballRenter: events::FootbalEvents{
 
         require!(
             start_time < end_time,
-            "yo ahh aint a time traveler 6/7 not 7/6"
+            "start time cant be higher than end time"
         );
+
+
+        self.check_overlap(start_time, end_time);
 
         let current_slot_id = self.next_slot_id().get();
         let next_slot_id = current_slot_id + 1;
@@ -253,6 +256,14 @@ pub trait FootballRenter: events::FootbalEvents{
             "the court cost must be set"
         );
 
+        if payment_amount < court_cost {
+            sc_print!(
+                "collected funds ({}) are less than the required court cost ({}). paying the collected amount",
+                payment_amount,
+                court_cost
+            );
+        }
+
         self.send().direct_egld(&manager_address, &payment_amount);
         slot.amount = BigUint::zero();
         self.reserved_slots(slot_id).set(&slot);
@@ -322,7 +333,28 @@ pub trait FootballRenter: events::FootbalEvents{
         (slot.start, slot.end, slot.payer_address, slot.amount, slot.confirmed, slot.initiator_address).into()  
     }
 
+
+    fn check_overlap(&self, start_time: u64, end_time: u64){
+        let current_id = self.next_slot_id().get();
+
+        for id in 1..current_id{
+            let slot_mapper = self.reserved_slots(id);
+
+            if !slot_mapper.is_empty() {
+                let current_slot = slot_mapper.get();
+
+                let does_overlap = start_time < current_slot.end && end_time > current_slot.start;
+
+                require!(
+                    !does_overlap,
+                    "time conflict: overlapping"
+                );
+            }
+        }
+    }
 }
 
 
 // if we for example have 2 participants and the cost isnt met, we just refund to those 2 right?
+
+

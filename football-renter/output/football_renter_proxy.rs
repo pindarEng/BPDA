@@ -43,12 +43,16 @@ where
     From: TxFrom<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn init(
+    pub fn init<
+        Arg0: ProxyArg<BigUint<Env::Api>>,
+    >(
         self,
+        min_deposit_init: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
+            .argument(&min_deposit_init)
             .original_result()
     }
 }
@@ -147,15 +151,67 @@ where
             .original_result()
     }
 
-    pub fn get_reserved_slot<
+    pub fn pay_court<
         Arg0: ProxyArg<u64>,
     >(
         self,
         slot_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, Slot<Env::Api>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("getReservedSlot")
+            .raw_call("payCourt")
+            .argument(&slot_id)
+            .original_result()
+    }
+
+    pub fn set_football_court_cost<
+        Arg0: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        cost: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setFootballCourtCost")
+            .argument(&cost)
+            .original_result()
+    }
+
+    pub fn confirm_slot<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        slot_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("confirmSlot")
+            .argument(&slot_id)
+            .original_result()
+    }
+
+    pub fn get_slot_status<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        slot_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValue4<Slot<Env::Api>, ManagedVec<Env::Api, ManagedAddress<Env::Api>>, BigUint<Env::Api>, bool>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getSlotStatus")
+            .argument(&slot_id)
+            .original_result()
+    }
+
+    pub fn get_reserved_slot_details<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        slot_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValue6<u64, u64, ManagedAddress<Env::Api>, BigUint<Env::Api>, bool, ManagedAddress<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getReservedSlotDetails")
             .argument(&slot_id)
             .original_result()
     }
