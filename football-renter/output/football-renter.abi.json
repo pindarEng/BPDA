@@ -171,22 +171,16 @@
             ],
             "outputs": [
                 {
-                    "type": "u64"
+                    "type": "Slot"
                 },
                 {
-                    "type": "u64"
-                },
-                {
-                    "type": "Address"
+                    "type": "List<Address>"
                 },
                 {
                     "type": "BigUint"
                 },
                 {
                     "type": "bool"
-                },
-                {
-                    "type": "Address"
                 }
             ]
         }

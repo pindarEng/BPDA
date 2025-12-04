@@ -150,6 +150,8 @@ pub trait FootballRenter: events::FootbalEvents{
         slot.amount += deposit_amount.clone_value();
         
         self.reserved_slots(slot_id).set(&slot);
+
+        self.emit_add_participant_event(slot_id, &caller);
         
     }
 
@@ -262,8 +264,34 @@ pub trait FootballRenter: events::FootbalEvents{
                 payment_amount,
                 court_cost
             );
+            let min_deposit = self.minimum_deposit().get();
+            let mut total_refunded = BigUint::zero();
+            let mut participants_mapper = self.participants(slot_id);
+
+            let participants_addreses = participants_mapper.iter().collect::<ManagedVec<Self::Api, ManagedAddress<Self::Api>>>();
+            
+            for participants_address in participants_addreses.into_iter(){
+                require!(slot.amount >= &total_refunded + &min_deposit, "Not enough funds for full refund");
+
+                self.send().direct_egld(&participants_address, &min_deposit);
+                total_refunded += min_deposit.clone();  // or use clone  
+            }
+            
+            let remaining_balance = &slot.amount - &total_refunded;
+            if remaining_balance > BigUint::zero(){
+                self.send().direct_egld(&slot.initiator_address, &remaining_balance);
+                total_refunded += &remaining_balance;   
+            }
+
+            self.reserved_slots(slot_id).clear();
+            participants_mapper.clear();
+
+            self.emit_slot_cancelled_event(slot_id, &caller, &total_refunded);
+            
+            return;
         }
 
+        // suficient funds
         self.send().direct_egld(&manager_address, &payment_amount);
         slot.amount = BigUint::zero();
         self.reserved_slots(slot_id).set(&slot);
@@ -326,11 +354,19 @@ pub trait FootballRenter: events::FootbalEvents{
     }
 
     #[view(getReservedSlotDetails)]  
-    fn get_reserved_slot_details(&self, slot_id: SlotId) -> MultiValue6<u64, u64, ManagedAddress<Self::Api>, BigUint<Self::Api>, bool, ManagedAddress<Self::Api>> 
-    {  
+    fn get_reserved_slot_details(&self, slot_id: SlotId) -> MultiValue4<Slot<Self::Api>, ManagedVec<Self::Api, ManagedAddress<Self::Api>>, BigUint<Self::Api>, bool>
+    {
         let slot = self.reserved_slots(slot_id).get();  
-    
-        (slot.start, slot.end, slot.payer_address, slot.amount, slot.confirmed, slot.initiator_address).into()  
+        let participants = self.participants(slot_id).iter().collect();
+        let amount = slot.amount.clone();
+        let confirmed = slot.confirmed;
+
+        require!(
+            !self.reserved_slots(slot_id).is_empty(),
+            "the slot doesnt exit"
+        );
+
+        (slot,participants,amount,confirmed).into()  
     }
 
 
