@@ -106,4 +106,58 @@ async fn cancel_slot_test() {
     assert_eq!(balance, 0u128, "Contract should be empty after cancellation");  
 }
 
+#[tokio::test]  
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]  
+async fn overlap_failure_test() {  
+    let mut interact = ContractInteract::new(Config::chain_simulator_config()).await;  
+    let bob = interact.user_wallet().clone();  
+    let alice = interact.owner_wallet().clone();  
+  
+    interact.deploy().await;   
+  
+    // Bob books 100 -> 200 successfully  
+    interact.create_football_slot(&bob, 100, 200, 500).await;  
+    println!("Bob booked 100-200");  
+  
+    let dest_address = interact.contract_address().clone();
+    // Alice tries to book overlapping slot 150 -> 250  
+    let result = interact.interactor_mut()  
+        .tx()  
+        .from(&alice)  
+        .to(&dest_address)  
+        .gas(50_000_000u64)  
+        .typed(rust_interact::football_renter_proxy::FootballRenterProxy)  
+        .create_football_slot(150u64, 250u64)  
+        .egld(BigUint::from(500u128))  
+        .returns(ReturnsHandledOrError::new())  
+        .run()  
+        .await;  
+  
+    assert!(result.is_err(), "Overlap should be blocked");  
+    println!("Overlap correctly blocked!");  
+}
 
+#[tokio::test]
+#[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
+async fn security_permission_test() {
+    let mut interact = ContractInteract::new(Config::chain_simulator_config()).await;
+    let bob = interact.user_wallet().clone(); // bob is NOT the manager
+
+    interact.deploy().await; 
+
+    let dest_address = interact.contract_address().clone();
+
+    // bob incearca prostii
+    let status_code = interact.interactor_mut()
+        .tx()
+        .from(&bob)
+        .to(&dest_address)
+        .gas(30_000_000u64)
+        .typed(rust_interact::football_renter_proxy::FootballRenterProxy)
+        .set_football_court_cost(BigUint::<StaticApi>::from(5000u128))
+        .returns(ReturnsStatus)
+        .run()
+        .await;
+
+    assert_eq!(status_code, 4, "Bob should not be able to set court cost");
+}
