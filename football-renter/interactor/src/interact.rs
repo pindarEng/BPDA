@@ -4,6 +4,8 @@ pub mod config;
 pub mod football_renter_proxy;
 use football_renter_proxy as proxy;
 
+pub type SlotId = u64;
+
 use config::Config;
 use multiversx_sc_snippets::imports::*;
 use serde::{Deserialize, Serialize};
@@ -14,29 +16,9 @@ use std::{
 
 const STATE_FILE: &str = "state.toml";
 
-pub async fn football_renter_cli() {
-    env_logger::init();
-
-    let mut args = std::env::args();
-    let _ = args.next();
-    let cmd = args.next().expect("at least one argument required");
-    let config = Config::new();
-    let mut interact = ContractInteract::new(config).await;
-    match cmd.as_str() {
-        "deploy" => interact.deploy().await,
-        "upgrade" => interact.upgrade().await,
-        "setMinDeposit" => interact.set_minimum_deposit().await,
-        "create_football_slot" => interact.create_football_slot().await,
-        "participate_football_slot" => interact.participate_football_slot().await,
-        "cancel_football_slot" => interact.cancel_football_slot().await,
-        "setFootballFieldManager" => interact.set_football_field_manager().await,
-        "payCourt" => interact.pay_court().await,
-        "setFootballCourtCost" => interact.set_football_court_cost().await,
-        "confirmSlot" => interact.confirm_slot().await,
-        "getSlotStatus" => interact.get_slot_status().await,
-        "getReservedSlotDetails" => interact.get_reserved_slot_details().await,
-        _ => panic!("unknown command: {}", &cmd),
-    }
+// Note: Removed the CLI main function logic to focus on Testing structure
+pub async fn football_renter_cli() { 
+    // Kept empty to satisfy compiler if needed, but we focus on the struct below
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -45,72 +27,56 @@ pub struct State {
 }
 
 impl State {
-        // Deserializes state from file
-        pub fn load_state() -> Self {
-            if Path::new(STATE_FILE).exists() {
-                let mut file = std::fs::File::open(STATE_FILE).unwrap();
-                let mut content = String::new();
-                file.read_to_string(&mut content).unwrap();
-                toml::from_str(&content).unwrap()
-            } else {
-                Self::default()
-            }
-        }
-    
-        /// Sets the contract address
-        pub fn set_address(&mut self, address: Bech32Address) {
-            self.contract_address = Some(address);
-        }
-    
-        /// Returns the contract address
-        pub fn current_address(&self) -> &Bech32Address {
-            self.contract_address
-                .as_ref()
-                .expect("no known contract, deploy first")
-        }
-    }
-    
-    impl Drop for State {
-        // Serializes state to file
-        fn drop(&mut self) {
-            let mut file = std::fs::File::create(STATE_FILE).unwrap();
-            file.write_all(toml::to_string(self).unwrap().as_bytes())
-                .unwrap();
+    pub fn load_state() -> Self {
+        if Path::new(STATE_FILE).exists() {
+            let mut file = std::fs::File::open(STATE_FILE).unwrap();
+            let mut content = String::new();
+            file.read_to_string(&mut content).unwrap();
+            toml::from_str(&content).unwrap()
+        } else {
+            Self::default()
         }
     }
 
+    pub fn set_address(&mut self, address: Bech32Address) {
+        self.contract_address = Some(address);
+    }
+
+    pub fn current_address(&self) -> &Bech32Address {
+        self.contract_address
+            .as_ref()
+            .expect("no known contract, deploy first")
+    }
+}
+
+impl Drop for State {
+    fn drop(&mut self) {
+        let mut file = std::fs::File::create(STATE_FILE).unwrap();
+        file.write_all(toml::to_string(self).unwrap().as_bytes())
+            .unwrap();
+    }
+}
+
 pub struct ContractInteract {
     interactor: Interactor,
-    wallet_address: Address,
+    wallet_address: Address,     // Default (Alice/Owner)
+    second_wallet_address: Address, // Bob
     contract_code: BytesValue,
     state: State
 }
 
 impl ContractInteract {
-
-    pub fn interactor_mut(&mut self) -> &mut Interactor {
-        &mut self.interactor
-    }
-
-    pub fn wallet(&self) -> &Address {
-        &self.wallet_address
-    }
-
-    pub fn contract_address(&self) -> &Bech32Address {
-        self.state.current_address()
-    }
-
-
     pub async fn new(config: Config) -> Self {
         let mut interactor = Interactor::new(config.gateway_uri())
             .await
             .use_chain_simulator(config.use_chain_simulator());
 
         interactor.set_current_dir_from_workspace("football-renter");
+        
+        // Register Alice (Owner) and Bob (User)
         let wallet_address = interactor.register_wallet(test_wallets::alice()).await;
+        let second_wallet_address = interactor.register_wallet(test_wallets::bob()).await;
 
-        // Useful in the chain simulator setting
-        // generate blocks until ESDTSystemSCAddress is enabled
         interactor.generate_blocks_until_all_activations().await;
         
         let contract_code = BytesValue::interpret_from(
@@ -121,233 +87,185 @@ impl ContractInteract {
         ContractInteract {
             interactor,
             wallet_address,
+            second_wallet_address,
             contract_code,
             state: State::load_state()
         }
     }
 
+    // Helper to get Alice (Owner)
+    pub fn owner_wallet(&self) -> &Address {
+        &self.wallet_address
+    }
+
+    // Helper to get Bob (User)
+    pub fn user_wallet(&self) -> &Address {
+        &self.second_wallet_address
+    }
+
+    pub fn interactor_mut(&mut self) -> &mut Interactor {
+        &mut self.interactor
+    }
+
+    pub fn contract_address(&self) -> &Bech32Address {
+        self.state.current_address()
+    }
+
     pub async fn deploy(&mut self) {
-        let min_deposit_init = BigUint::<StaticApi>::from(0u128);
+        let min_deposit_init = BigUint::<StaticApi>::from(500u128); // Initialize with 500
 
         let new_address = self
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .gas(30_000_000u64)
+            .gas(100_000_000u64) // INCREASED GAS HERE
             .typed(proxy::FootballRenterProxy)
             .init(min_deposit_init)
             .code(&self.contract_code)
             .returns(ReturnsNewAddress)
             .run()
             .await;
+        
         let new_address_bech32 = new_address.to_bech32_default();
-        println!("new address: {new_address_bech32}");
+        println!("Deployed at: {new_address_bech32}");
         self.state.set_address(new_address_bech32);
     }
 
-    pub async fn upgrade(&mut self) {
-        let response = self
-            .interactor
+    pub async fn set_minimum_deposit(&mut self, caller: &Address, amount: u128) {
+        let amount_bn = BigUint::<StaticApi>::from(amount);
+
+        self.interactor
             .tx()
-            .to(self.state.current_address())
-            .from(&self.wallet_address)
-            .gas(30_000_000u64)
-            .typed(proxy::FootballRenterProxy)
-            .upgrade()
-            .code(&self.contract_code)
-            .code_metadata(CodeMetadata::UPGRADEABLE)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn set_minimum_deposit(&mut self) {
-        let amount = BigUint::<StaticApi>::from(0u128);
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
+            .from(caller)
             .to(self.state.current_address())
             .gas(30_000_000u64)
             .typed(proxy::FootballRenterProxy)
-            .set_minimum_deposit(amount)
-            .returns(ReturnsResultUnmanaged)
+            .set_minimum_deposit(amount_bn)
             .run()
             .await;
-
-        println!("Result: {response:?}");
     }
 
-    pub async fn create_football_slot(&mut self) {
-        let egld_amount = BigUint::<StaticApi>::from(0u128);
+    // Modified to accept arguments and return the Slot ID
+    pub async fn create_football_slot(&mut self, caller: &Address, start: u64, end: u64, payment: u128) -> u64 {
+        let payment_bn = BigUint::<StaticApi>::from(payment);
 
-        let start_time = 0u64;
-        let end_time = 0u64;
-
-        let response = self
-            .interactor
+        let result = self.interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(caller)
             .to(self.state.current_address())
-            .gas(30_000_000u64)
+            .gas(50_000_000u64)
             .typed(proxy::FootballRenterProxy)
-            .create_football_slot(start_time, end_time)
-            .egld(egld_amount)
+            .create_football_slot(start, end)
+            .egld(payment_bn)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-
-        println!("Result: {response:?}");
+        
+        result
     }
 
-    pub async fn participate_football_slot(&mut self) {
-        let egld_amount = BigUint::<StaticApi>::from(0u128);
+    pub async fn participate_football_slot(&mut self, caller: &Address, slot_id: u64, payment: u128) {
+        let payment_bn = BigUint::<StaticApi>::from(payment);
 
-        let slot_id = 0u64;
-
-        let response = self
-            .interactor
+        self.interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(caller)
             .to(self.state.current_address())
-            .gas(30_000_000u64)
+            .gas(50_000_000u64)
             .typed(proxy::FootballRenterProxy)
             .participate_football_slot(slot_id)
-            .egld(egld_amount)
-            .returns(ReturnsResultUnmanaged)
+            .egld(payment_bn)
             .run()
             .await;
-
-        println!("Result: {response:?}");
     }
 
-    pub async fn cancel_football_slot(&mut self) {
-        let slot_id = 0u64;
-
-        let response = self
-            .interactor
+    pub async fn confirm_slot(&mut self, caller: &Address, slot_id: u64) {
+        self.interactor
             .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::FootballRenterProxy)
-            .cancel_football_slot(slot_id)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn set_football_field_manager(&mut self) {
-        let new_manager = ManagedAddress::<StaticApi>::zero();
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::FootballRenterProxy)
-            .set_football_field_manager(new_manager)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn pay_court(&mut self) {
-        let slot_id = 0u64;
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::FootballRenterProxy)
-            .pay_court(slot_id)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn set_football_court_cost(&mut self) {
-        let cost = BigUint::<StaticApi>::from(0u128);
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
-            .to(self.state.current_address())
-            .gas(30_000_000u64)
-            .typed(proxy::FootballRenterProxy)
-            .set_football_court_cost(cost)
-            .returns(ReturnsResultUnmanaged)
-            .run()
-            .await;
-
-        println!("Result: {response:?}");
-    }
-
-    pub async fn confirm_slot(&mut self) {
-        let slot_id = 0u64;
-
-        let response = self
-            .interactor
-            .tx()
-            .from(&self.wallet_address)
+            .from(caller)
             .to(self.state.current_address())
             .gas(30_000_000u64)
             .typed(proxy::FootballRenterProxy)
             .confirm_slot(slot_id)
-            .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-
-        println!("Result: {response:?}");
     }
 
-    pub async fn get_slot_status(&mut self) {
-        let slot_id = 0u64;
-
-        let response = self
-            .interactor
+    pub async fn pay_court(&mut self, caller: &Address, slot_id: u64) {
+        self.interactor
             .tx()
-            .from(&self.wallet_address)
+            .from(caller)
+            .to(self.state.current_address())
+            .gas(50_000_000u64)
+            .typed(proxy::FootballRenterProxy)
+            .pay_court(slot_id)
+            .run()
+            .await;
+    }
+
+    pub async fn set_football_court_cost(&mut self, caller: &Address, cost: u128) {
+        let cost_bn = BigUint::<StaticApi>::from(cost);
+        self.interactor
+            .tx()
+            .from(caller)
             .to(self.state.current_address())
             .gas(30_000_000u64)
+            .typed(proxy::FootballRenterProxy)
+            .set_football_court_cost(cost_bn)
+            .run()
+            .await;
+    }
+
+    // View function to help verify tests
+    pub async fn get_slot_status_view(&mut self, slot_id: u64) -> bool {
+        let result = self.interactor
+            .query()
+            .to(self.state.current_address())
             .typed(proxy::FootballRenterProxy)
             .get_slot_status(slot_id)
             .returns(ReturnsResultUnmanaged)
             .run()
             .await;
-
-        println!("Result: {response:?}");
+        
+        let (_slot, _participants, _amount, confirmed) = result.into_tuple();
+        
+        confirmed
     }
 
-    pub async fn get_reserved_slot_details(&mut self) {
-        let slot_id = 0u64;
+    pub async fn cancel_football_slot(&mut self, caller: &Address, slot_id: u64) {  
+        self.interactor  
+            .tx()  
+            .from(caller)  
+            .to(self.state.current_address())  
+            .gas(50_000_000u64)  
+            .typed(proxy::FootballRenterProxy)  
+            .cancel_football_slot(slot_id)  
+            .run()  
+            .await;  
+    }
 
-        let result_value = self
-            .interactor
-            .query()
+    pub async fn set_football_field_manager(&mut self, caller: &Address, new_manager: &Address) {
+        // Note: The proxy usually accepts a standard reference to Address
+        self.interactor
+            .tx()
+            .from(caller)
             .to(self.state.current_address())
+            .gas(30_000_000u64)
             .typed(proxy::FootballRenterProxy)
-            .get_reserved_slot_details(slot_id)
-            .returns(ReturnsResultUnmanaged)
+            .set_football_field_manager(new_manager)
             .run()
             .await;
-
-        println!("Result: {result_value:?}");
     }
 
+    // pub async fn get_reserved_slot_details(&mut self, slot_id: u64) -> MultiValue4<Slot<StaticApi>, ManagedVec<StaticApi, ManagedAddress<StaticApi>>, BigUint<StaticApi>, bool> {  
+    //     self.interactor  
+    //         .query()  
+    //         .to(self.state.current_address())  
+    //         .typed(proxy::FootballRenterProxy)  
+    //         .get_reserved_slot_details(slot_id)  
+    //         .returns(ReturnsResultUnmanaged)  
+    //         .run()  
+    //         .await  
+    // }
+
 }
-
-
