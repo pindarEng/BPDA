@@ -219,7 +219,6 @@ pub trait FootballRenter: events::FootbalEvents{
         self.field_manager_address().set(new_manager.clone());
 
         self.emit_manager_assigned_event(&previous_manager, &new_manager, &caller);
-        //event emit manager assigned event
     }
 
 
@@ -274,7 +273,7 @@ pub trait FootballRenter: events::FootbalEvents{
                 require!(slot.amount >= &total_refunded + &min_deposit, "Not enough funds for full refund");
 
                 self.send().direct_egld(&participants_address, &min_deposit);
-                total_refunded += min_deposit.clone();  // or use clone  
+                total_refunded += min_deposit.clone();
             }
             
             let remaining_balance = &slot.amount - &total_refunded;

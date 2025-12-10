@@ -19,16 +19,15 @@ async fn deploy_test_football_renter_cs() {
 #[tokio::test]
 #[cfg_attr(not(feature = "chain-simulator-tests"), ignore)]
 async fn full_football_renter_scenario() {
-    // 1. Setup Interactor
     let mut interact = ContractInteract::new(Config::chain_simulator_config()).await;
     let owner = interact.owner_wallet().clone();
     let gabi = interact.user_wallet().clone();
 
-    // 2. Owner
+    
     interact.deploy().await; 
 
-    // 3. Admin Setup: Set Court Cost
-    let court_cost = 1000u128;
+    
+    let court_cost = 1000u128; // pret 1000
     interact.set_football_court_cost(&owner, court_cost).await;
 
     // start=100, end=200, pay=500
@@ -46,8 +45,7 @@ async fn full_football_renter_scenario() {
     let is_confirmed = interact.get_slot_status_view(slot_id).await;
     assert!(is_confirmed, "Slot should be confirmed now");
 
-    // 8. Pay Court (Triggered by Manager/Owner)
-    // Total collected (1000) >= Court Cost (1000). Payment should succeed.
+    // collected = 1000 >= court cost ok good
     interact.pay_court(&owner, slot_id).await;
     println!("Court paid successfully");
 
@@ -69,7 +67,7 @@ async fn refund_scenario_test() {
     interact.confirm_slot(&owner, slot_id).await;
 
     interact.pay_court(&owner, slot_id).await;
-    println!("Refund logic executed");
+    println!("refund logic executed");
 
     let contract_address = interact.contract_address().to_address();
     
@@ -77,10 +75,10 @@ async fn refund_scenario_test() {
         .get_account(&contract_address)
         .await;
 
-    println!("Contract balance: {}", contract_account.balance);  
+    println!("contract balance: {}", contract_account.balance);  
 
     let balance: u128 = contract_account.balance.parse().unwrap();  
-    assert_eq!(balance, 0u128, "Contract should have 0 balance after refund");
+    assert_eq!(balance, 0u128, "should be 0 money in contract");
 }
 
 #[tokio::test]  
@@ -103,7 +101,7 @@ async fn cancel_slot_test() {
         .get_account(&contract_address)  
         .await;  
     let balance: u128 = contract_account.balance.parse().unwrap();  
-    assert_eq!(balance, 0u128, "Contract should be empty after cancellation");  
+    assert_eq!(balance, 0u128, "contract should be empty");  
 }
 
 #[tokio::test]  
@@ -133,8 +131,8 @@ async fn overlap_failure_test() {
         .run()  
         .await;  
   
-    assert!(result.is_err(), "Overlap should be blocked");  
-    println!("Overlap correctly blocked!");  
+    assert!(result.is_err(), "overlap - need to block");  
+    println!("overlap blocked !!!");  
 }
 
 #[tokio::test]
@@ -159,5 +157,5 @@ async fn security_permission_test() {
         .run()
         .await;
 
-    assert_eq!(status_code, 4, "Bob should not be able to set court cost");
+    assert_eq!(status_code, 4, "bob cant do this, bob not the mananger, bad bob");
 }

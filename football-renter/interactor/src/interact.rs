@@ -118,7 +118,7 @@ impl ContractInteract {
             .interactor
             .tx()
             .from(&self.wallet_address)
-            .gas(100_000_000u64) // INCREASED GAS HERE
+            .gas(100_000_000u64)
             .typed(proxy::FootballRenterProxy)
             .init(min_deposit_init)
             .code(&self.contract_code)
@@ -145,7 +145,6 @@ impl ContractInteract {
             .await;
     }
 
-    // Modified to accept arguments and return the Slot ID
     pub async fn create_football_slot(&mut self, caller: &Address, start: u64, end: u64, payment: u128) -> u64 {
         let payment_bn = BigUint::<StaticApi>::from(payment);
 
@@ -216,7 +215,6 @@ impl ContractInteract {
             .await;
     }
 
-    // View function to help verify tests
     pub async fn get_slot_status_view(&mut self, slot_id: u64) -> bool {
         let result = self.interactor
             .query()
@@ -245,7 +243,6 @@ impl ContractInteract {
     }
 
     pub async fn set_football_field_manager(&mut self, caller: &Address, new_manager: &Address) {
-        // Note: The proxy usually accepts a standard reference to Address
         self.interactor
             .tx()
             .from(caller)
