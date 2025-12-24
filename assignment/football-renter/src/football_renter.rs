@@ -14,7 +14,7 @@ mod storage;
 pub struct Slot<M: ManagedTypeApi>{
     pub start: u64,
     pub end: u64,
-    pub payer_address: ManagedAddress<M>,
+    pub payer_address:       ManagedAddress<M>,
     pub amount: BigUint<M>,
     pub confirmed: bool, // true if admin says confirmed
     pub initiator_address: ManagedAddress<M>,

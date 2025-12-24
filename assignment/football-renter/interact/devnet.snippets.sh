@@ -57,7 +57,7 @@ cancel_slot() {
 set_manager() {
     # read -p "New manager bech32 address: " NEW_MANAGER
 
-    mxpy --verbose contract call ${ADDRESS} --pem=${GABI_field_manager} --function="setFootballFieldManager" --arguments ${GABI_field_manager_address} --gas-limit 10000000 --proxy=${PROXY} --send
+    mxpy --verbose contract call ${ADDRESS} --pem=${GABI_1} --function="setFootballFieldManager" --arguments ${GABI_field_manager_address} --gas-limit 10000000 --proxy=${PROXY} --send
 }
 
 set_court_cost() {
