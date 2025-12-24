@@ -1,0 +1,4 @@
+
+
+[[proxy]]
+path = "interactor/src/distributed_computing_proxy.rs"

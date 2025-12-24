@@ -1,0 +1,155 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.90.0",
+            "commitHash": "1159e78c4747b02ef996e55082b704c09b970588",
+            "commitDate": "2025-09-14",
+            "channel": "Stable",
+            "short": "rustc 1.90.0 (1159e78c4 2025-09-14)"
+        },
+        "contractCrate": {
+            "name": "distributed-computing",
+            "version": "0.0.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.62.1"
+        }
+    },
+    "name": "DistributedComputing",
+    "constructor": {
+        "inputs": [],
+        "outputs": []
+    },
+    "upgradeConstructor": {
+        "inputs": [],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "name": "postTask",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "docker_image_uri",
+                    "type": "bytes"
+                },
+                {
+                    "name": "input_data_uri",
+                    "type": "bytes"
+                },
+                {
+                    "name": "max_workers",
+                    "type": "u32"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "submitResult",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "task_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "result_hash",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getTask",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "task_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Task"
+                }
+            ]
+        },
+        {
+            "name": "getTaskStatus",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "task_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "TaskStatus"
+                }
+            ]
+        }
+    ],
+    "esdtAttributes": [],
+    "hasCallback": false,
+    "types": {
+        "Task": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "creator",
+                    "type": "Address"
+                },
+                {
+                    "name": "docker_image_uri",
+                    "type": "bytes"
+                },
+                {
+                    "name": "input_data_uri",
+                    "type": "bytes"
+                },
+                {
+                    "name": "reward_amount",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "max_workers",
+                    "type": "u32"
+                },
+                {
+                    "name": "submissions_count",
+                    "type": "u32"
+                },
+                {
+                    "name": "status",
+                    "type": "TaskStatus"
+                }
+            ]
+        },
+        "TaskStatus": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "Open",
+                    "discriminant": 0
+                },
+                {
+                    "name": "InVerification",
+                    "discriminant": 1
+                },
+                {
+                    "name": "Completed",
+                    "discriminant": 2
+                },
+                {
+                    "name": "Failed",
+                    "discriminant": 3
+                }
+            ]
+        }
+    }
+}
