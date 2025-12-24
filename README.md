@@ -200,9 +200,4 @@ To run the worker server (triggered by the UI Run Worker button):
 Start the on-demand server:
 python3 worker_node/worker_server.py --wallet ../wallet/new_WORKER_1.pem
 
-Docs: project/distributed-computing-dapp/worker_node/README.md
-To run the polling on-chain worker:
-python3 worker_node/on_chain_worker.py --wallet ../wallet/new_WORKER_1.pem
-(See worker_node/on_chain_worker.py)
-
 </details>
