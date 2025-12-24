@@ -1,3 +1,14 @@
+# Blockchain Protocols and Distributed Applications
+
+This repository contains the assignment and project for the Blockchain Protocols and Distributed Applications course. It demonstrates the development of smart contracts and decentralized applications (dApps) using the MultiversX blockchain ecosystem.
+
+*   **Assignment**: A smart contract designed to manage the rental of a football field, handling reservations, payments, and cancellations.
+
+*   **Project**: A smart contract and a dApp for distributed computing that allows users to post computational tasks (via Docker images) and incentivizes workers to process them and submit results on-chain.
+
+Expand the sections below for each documentation.
+
+
 <details>
 <summary><strong>Assignment</strong></summary>
 <br>
@@ -180,10 +191,9 @@ Install & run:
 pnpm install
 # development (devnet)
 pnpm start-devnet
-# or production build
-pnpm build
+```
 
-The dApp serves on https://localhost:3000 (see playwright.config.ts webServer config).
+The dApp serves on https://localhost:3000
 
 To run the worker server (triggered by the UI Run Worker button):
 
