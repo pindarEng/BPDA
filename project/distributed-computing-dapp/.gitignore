@@ -44,4 +44,7 @@ tests/support/wallets/
 
 /wallet
 
+/local-ipfs/curation_worker
+/local-ipfs/ipfs_data
+
 .gitold
