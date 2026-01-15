@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  ipfs:
+    image: ipfs/kubo:latest
+    container_name: ipfs_node
+    ports:
+      - "4001:4001"    # IPFS Swarm
+      - "5001:5001"    # API
+      - "8080:8080"    # Gateway
+    volumes:
+      - ./ipfs_data:/data/ipfs
+      - ../curation_worker:/export
+    environment:
+      - IPFS_PROFILE=server

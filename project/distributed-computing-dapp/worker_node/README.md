@@ -38,6 +38,12 @@ Start the worker server. This allows you to click "Run Worker" in the dApp dashb
 python3 worker_server.py --wallet ../wallet/new_WORKER_1.pem
 ```
 
+3. **Malicious**
+
+Run this:
+```bash 
+python3 worker_node/malicious_worker.py --task-id {YOU CHOOSE THIS} --wallet wallet/new_WORKER_{YOU CHOOSE THIS}.pem
+```
 The server runs on `http://localhost:5005`.
 
 ## How it works

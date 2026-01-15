@@ -36,8 +36,7 @@ def run_docker_processor(image_name, input_data):
     print(f"[*] Processing task with image '{image_name}'...")
 
     try:
-        # 1. Attempt to pull the image
-        # We try to pull to ensure we have the image or get the latest version.
+
         print(f"[*] Pulling image: {image_name}...")
         try:
             subprocess.run(
@@ -49,8 +48,6 @@ def run_docker_processor(image_name, input_data):
         except subprocess.CalledProcessError:
             print(f"[*] Pull failed or image is local. Proceeding to execution...")
 
-        # 2. Run the container
-        # --rm removes the container instance after it exits
         command = ["docker", "run", "--rm", image_name]
         
         if input_data and input_data.strip():
@@ -68,9 +65,6 @@ def run_docker_processor(image_name, input_data):
         
         output = result.stdout.strip()
         print(f"[*] Container Output: {output}")
-
-        # 3. Remove the image to save space
-        # We don't check=True here because if it's in use or fails, we don't want to crash the worker response
         print(f"[*] Cleaning up image: {image_name}...")
         subprocess.run(
             ["docker", "rmi", image_name], 
@@ -83,7 +77,6 @@ def run_docker_processor(image_name, input_data):
         
     except subprocess.CalledProcessError as e:
         print(f"[!] Docker execution failed: {e.stderr}")
-        # Attempt cleanup even on failure
         subprocess.run(["docker", "rmi", image_name], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return None
     except FileNotFoundError:

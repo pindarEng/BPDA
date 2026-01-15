@@ -71,7 +71,6 @@ export const TaskBoard = () => {
 
   const fetchedTasks: Task[] = [];
       
-      // Try to fetch first 10 tasks
       for (let i = 0; i < 10; i++) {
         try {
           const interaction = controller.createQuery({

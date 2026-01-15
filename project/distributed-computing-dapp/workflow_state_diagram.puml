@@ -1,0 +1,32 @@
+@startuml
+scale 800 width
+title Distributed Computing Workflow
+
+state "Requester Workflow" as Requester {
+  [*] --> PrepareTask : <b>1. Off-Chain Prep (website)</b>\n- IPFS URI\n- Docker Image URI
+  
+  PrepareTask --> PostTask : <b>2. On-Chain Action</b>\n- Call 'post_task'\n- Send Reward (EGLD)
+  
+  PostTask --> Waiting : <b>3. Wait</b>\nTask is 'Open'
+  
+  Waiting --> TaskResult : <b>8. Finalization</b>\nSmart Contract distributes\nfunds based on consensus
+  
+  TaskResult --> [*] : Refund or Job Done
+}
+
+--
+
+state "Worker Workflow" as Worker {
+  [*] --> FetchTasks : <b>4. Discovery</b>\nMonitor Smart Contract
+  
+  state "Fetch Tasks" as FetchTasks
+  FetchTasks --> Processing : Task Detected
+  
+  state Processing {
+    [*] --> Fetching : <b>5. Off-Chain Fetch</b>\n- docker pull
+    Fetching --> Execution : <b>6. Computation</b>\nRun Container\nGenerate Hash
+  }
+  
+  Processing --> Submitting : <b>7. On-Chain Action</b>\nCall 'submit_result'
+}
+@enduml

@@ -12,7 +12,6 @@ def process_data(input_data):
         if len(list_a) != len(list_b):
             return json.dumps({"error": "Lists must be of same length"})
             
-        # Element-wise multiplication
         result = [a * b for a, b in zip(list_a, list_b)]
         return json.dumps({"c": result})
     except Exception as e:
