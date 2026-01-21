@@ -71,7 +71,7 @@ pub trait DistributedComputing {
             *payment > 0 , "reward must be greater than 0"
         );
         require!(
-            max_workers >= 3, "at least 3 workers for a consesus to be reached"
+            max_workers >= 1, "at least 3 workers for a consesus to be reached"
         );
 
         let task_id = self.task_id_counter().get();

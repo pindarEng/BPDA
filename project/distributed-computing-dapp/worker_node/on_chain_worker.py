@@ -9,7 +9,7 @@ import requests
 
 # Configuration
 PROXY = "https://devnet-api.multiversx.com"
-CONTRACT_ADDRESS = "erd1qqqqqqqqqqqqqpgqfgayg3ykmn6jluazdfhka02y3q9vjc8wnc0syn2dwx"
+CONTRACT_ADDRESS = "erd1qqqqqqqqqqqqqpgqskctlvmpx5kk2573h0vevgr3hmmplr0ync0sxx26qx"
 POLL_INTERVAL = 5  # Seconds
 
 def run_command(command):

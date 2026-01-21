@@ -4,6 +4,6 @@ export * from './sharedConfig';
 
 export const API_URL = 'https://devnet-template-api.multiversx.com';
 export const contractAddress =
-  'erd1qqqqqqqqqqqqqpgqfgayg3ykmn6jluazdfhka02y3q9vjc8wnc0syn2dwx';
+  'erd1qqqqqqqqqqqqqpgqskctlvmpx5kk2573h0vevgr3hmmplr0ync0sxx26qx';
 export const environment = EnvironmentsEnum.devnet;
 export const sampleAuthenticatedDomains = [API_URL];
